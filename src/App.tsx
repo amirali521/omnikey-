@@ -7,11 +7,37 @@ import ActivationHub from './components/ActivationHub';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 import LegalModal from './components/LegalModal';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import { Sparkles, X, Check } from 'lucide-react';
 
 export default function App() {
   const [activeModal, setActiveModal] = useState<'privacy' | 'terms' | 'download' | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [currentHash, setCurrentHash] = useState(window.location.hash);
+
+  // Synchronize path and hash changes for SPA routing
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+      setCurrentHash(window.location.hash);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+    setCurrentHash('');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
 
   // Auto-dismiss Toast alert
   useEffect(() => {
@@ -33,11 +59,31 @@ export default function App() {
   };
 
   const handleNavigateToSection = (sectionId: string) => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (currentPath !== '/') {
+      navigateTo('/');
+      // Allow DOM rendering before scrolling
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    } else {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
+
+  const isPrivacyPage = currentPath === '/privacy' || currentHash === '#/privacy' || currentHash === '#privacy';
+
+  if (isPrivacyPage) {
+    return (
+      <PrivacyPolicyPage 
+        onBackToHome={() => navigateTo('/')}
+        onNavigateToSection={handleNavigateToSection}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-100 selection:bg-indigo-500/30 selection:text-white">
@@ -78,7 +124,13 @@ export default function App() {
       {/* Section 6: Footer & Legal links */}
       <Footer 
         onNavigateToSection={handleNavigateToSection}
-        onOpenModal={(type) => setActiveModal(type)}
+        onOpenModal={(type) => {
+          if (type === 'privacy') {
+            navigateTo('/privacy');
+          } else {
+            setActiveModal(type);
+          }
+        }}
       />
 
       {/* Dynamic Legal and Action Modal popup dialogs */}
