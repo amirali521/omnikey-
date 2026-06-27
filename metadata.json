@@ -1,0 +1,6 @@
+{
+  "name": "Omni Keyboard",
+  "description": "The premium, adaptive multi-language Android keyboard with smart local dictionaries, fancy Unicode styling, and customizable glass themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
